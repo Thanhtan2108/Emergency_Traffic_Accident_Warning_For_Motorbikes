@@ -1,18 +1,32 @@
 #include <Arduino.h>
+#include "Button.h"
+#include "IBuzzer.h"
+#include "Buzzer_Active.h"
 
-// put function declarations here:
-int myFunction(int, int);
+Button myButton(4);
+IBuzzer* myBuzzer = new BuzzerActive(13);
+
+unsigned long beepStartTime = 0;
+const unsigned long beepDuration = 200;  // Beep 200ms
+bool isBeeping = false;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(115200);
+  myButton.begin();
+  myBuzzer->begin();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+  if (myButton.isPressed()) {
+    Serial.println("Button pressed!");  // Thêm log này
+    myBuzzer->turnOn();
+    beepStartTime = millis();
+    isBeeping = true;
+  }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  if (isBeeping && (millis() - beepStartTime >= beepDuration)) {
+    Serial.println("Beep off");  // Thêm log này để check off
+    myBuzzer->turnOff();
+    isBeeping = false;
+  }
 }
