@@ -2,9 +2,9 @@
 #define BUZZER_ACTIVE_H
 
 #include <Arduino.h>
-#include "IBuzzer.h"  // Implement interface
+#include "Buzzer.h"  // Implement interface
 
-class BuzzerActive : public IBuzzer {
+class BuzzerActive : public Buzzer {
 private:
     uint8_t pinBuzzer;
 

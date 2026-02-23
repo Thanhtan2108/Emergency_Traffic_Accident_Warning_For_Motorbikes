@@ -4,12 +4,12 @@
 #include <freertos/queue.h>
 #include <Common.h>
 #include "Button.h"
-#include "IBuzzer.h"
+#include "Buzzer.h"
 #include "Buzzer_Active.h"
 
 /* ================== OBJECT ================== */
 Button myButton(BUTTON_PIN);
-IBuzzer* myBuzzer = new BuzzerActive(BUZZER_PIN);
+Buzzer* myBuzzer = new BuzzerActive(BUZZER_PIN);
 
 /* ================== RTOS ================== */
 QueueHandle_t buzzerQueue;
@@ -17,7 +17,7 @@ QueueHandle_t buzzerQueue;
 /* ================== TASK BUTTON ================== */
 void TaskButton(void *pvParameters) {
   while (1) {
-    if (myButton.isPressed()) {
+    if (myButton.wasPressed()) {
       Serial.println("Button toggle!");
 
       bool cmd = true;

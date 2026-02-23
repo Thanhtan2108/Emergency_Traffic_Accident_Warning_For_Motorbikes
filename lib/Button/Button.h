@@ -14,7 +14,7 @@ private:
 public:
     Button(uint8_t pinButton, unsigned long debounceDelay = 50);
     void begin();
-    bool isPressed();
+    bool wasPressed();
 };
 
 #endif

@@ -12,17 +12,19 @@ void Button::begin() {
     pinMode(pinButton, INPUT_PULLUP);  // Kéo lên nội bộ cho active-low
 }
 
-bool Button::isPressed() {
+bool Button::wasPressed() {
+    unsigned long currentDebouceTime = millis();
+
     bool currentButtonState = digitalRead(pinButton);
 
     // Nếu có thay đổi → reset debounce timer
     if (currentButtonState != lastButtonState) {
-        lastDebounceTime = millis();
+        lastDebounceTime = currentDebouceTime;
         lastButtonState = currentButtonState;
     }
 
     // Chưa ổn định đủ lâu → bỏ qua
-    if ((millis() - lastDebounceTime) < debounceDelay) {
+    if ((currentDebouceTime - lastDebounceTime) < debounceDelay) {
         return false;
     }
 
