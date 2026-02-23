@@ -13,24 +13,26 @@ void Button::begin() {
 }
 
 bool Button::isPressed() {
-    bool reading = digitalRead(pinButton);  // Đọc giá trị pin (dùng bool cho phù hợp)
+    bool currentButtonState = digitalRead(pinButton);
 
-    // Nếu giá trị đọc thay đổi so với lần trước → reset timer
-    if (reading != lastButtonState) {
+    // Nếu có thay đổi → reset debounce timer
+    if (currentButtonState != lastButtonState) {
         lastDebounceTime = millis();
+        lastButtonState = currentButtonState;
     }
 
-    // Nếu đủ thời gian debounce
-    if ((millis() - lastDebounceTime) > debounceDelay) {
-        // Chỉ cập nhật trạng thái nếu reading khác buttonState hiện tại
-        if (reading != buttonState) {
-            buttonState = reading;
-        }
+    // Chưa ổn định đủ lâu → bỏ qua
+    if ((millis() - lastDebounceTime) < debounceDelay) {
+        return false;
     }
 
-    // Cập nhật lastButtonState cho lần sau (quan trọng!)
-    lastButtonState = reading;
+    // Trạng thái ổn định thay đổi
+    if (currentButtonState != buttonState) {
+        buttonState = currentButtonState;
 
-    // Trả về true nếu đang nhấn (LOW)
-    return (buttonState == LOW);
+        // Cạnh nhấn: HIGH → LOW
+        return (buttonState == LOW);
+    }
+
+    return false;
 }
