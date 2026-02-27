@@ -23,7 +23,7 @@
 // ============================================================
 
 // Mức gia tốc bình thường khi lái xe thông thường
-#define A_NORMAL_MAX          1.5f    // g
+#define A_NORMAL_MAX          1.50f    // g
 
 // Vượt ngưỡng này → kích hoạt EVENT_DETECTED (dùng magnitude_a_raw)
 #define A_EVENT_THRESHOLD     1.4f    // g
