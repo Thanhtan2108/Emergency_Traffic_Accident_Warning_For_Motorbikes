@@ -26,13 +26,13 @@
 #define A_NORMAL_MAX          1.5f    // g
 
 // Vượt ngưỡng này → kích hoạt EVENT_DETECTED (dùng magnitude_a_raw)
-#define A_EVENT_THRESHOLD     2.0f    // g
+#define A_EVENT_THRESHOLD     1.4f    // g
 
 // Giới hạn trên để phân loại ROAD_SHOCK trong CLASSIFYING
-#define A_SHOCK_MAX           3.0f    // g
+#define A_SHOCK_MAX           2.2f    // g
 
 // Vượt ngưỡng này trong CLASSIFYING → IMPACT_PENDING hoặc FALL_PENDING
-#define A_IMPACT_THRESHOLD    4.0f    // g
+#define A_IMPACT_THRESHOLD    2.5f    // g
 
 // Giá trị khởi tạo baseline = 1g (trọng lực khi xe đứng yên, trục Z hướng lên)
 #define BASELINE_INITIAL      1.0f    // g
@@ -62,10 +62,10 @@
 #define W_NORMAL_MAX          100.0f  // °/s
 
 // Vượt ngưỡng này → kích hoạt EVENT_DETECTED (dùng magnitude_omega_raw)
-#define W_EVENT_THRESHOLD     200.0f  // °/s
+#define W_EVENT_THRESHOLD     120.0f  // °/s
 
 // Ngưỡng phân loại FALL trong CLASSIFYING
-#define W_FALL_THRESHOLD      350.0f  // °/s
+#define W_FALL_THRESHOLD      200.0f  // °/s
 
 // Ngưỡng "đứng yên" trong FALL_PENDING – lọc dựng chân chống
 // Kết hợp với ROLL_CHANGE_RATE_SLOW để phát hiện xe được dựng lại từ từ
@@ -80,7 +80,7 @@
 
 // Ngưỡng VÀO FALL_PENDING/FALL_DETECTED (xe đang nằm)
 // Hysteresis: vào khi roll > 60°, ra khi roll < 40°  →  tránh oscillation
-#define ROLL_FALL_THRESHOLD   60.0f   // °  ← ngưỡng VÀO
+#define ROLL_FALL_THRESHOLD   45.0f   // °  ← ngưỡng VÀO
 
 // Ngưỡng RA khỏi FALL (xe đã được dựng lại đủ thẳng)
 #define ROLL_NORMAL_MAX       40.0f   // °  ← ngưỡng RA  (hysteresis gap = 20°)
@@ -131,7 +131,7 @@
 #define T_IMPACT_CONFIRM      500     // ms
 
 // Thời gian |roll| phải liên tục > ROLL_FALL_THRESHOLD để xác nhận → FALL_DETECTED
-#define T_FALL_CONFIRM        2000    // ms
+#define T_FALL_CONFIRM        800    // ms
 
 // Timeout riêng cho EVENT_DETECTED (phòng trường hợp bất thường)
 #define T_STATE_TIMEOUT       600     // ms
