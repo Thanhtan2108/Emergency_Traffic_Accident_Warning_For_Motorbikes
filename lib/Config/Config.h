@@ -149,6 +149,19 @@
 // Đảm bảo Complementary Filter ổn định và baseline hội tụ
 #define WARMUP_DURATION_MS    2000    // ms
 
+// Buffer timeout bảo vệ sau T_IMPACT_CONFIRM trong IMPACT_PENDING
+// Tổng timeout IMPACT_PENDING = T_IMPACT_CONFIRM + T_IMPACT_CONFIRM_BUFFER = 600ms
+#define T_IMPACT_CONFIRM_BUFFER  100  // ms
+
+// WatchdogTask: chu kỳ kiểm tra sức khỏe hệ thống
+#define WATCHDOG_CHECK_INTERVAL_MS  1000  // ms
+
+// WatchdogTask: timeout lấy stateMutex – không chờ lâu tránh block
+#define WATCHDOG_MUTEX_TIMEOUT_MS   100   // ms
+
+// StateTask: ngưỡng "chết" – không phản hồi quá thời gian này
+#define STATE_DEAD_TIMEOUT_MS       1000  // ms
+
 
 // ============================================================
 //  NHÓM 6 – NGƯỠNG KHỞI TẠO & SENSOR HEALTH
