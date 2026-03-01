@@ -8,7 +8,7 @@
 
 `Config.h` — Tất cả hằng số tập trung tại một chỗ:
 
-- Pin GPIO (SDA, SCL, Buzzer)
+- Pin GPIO (SDA, SCL, Buzzer, LED)
 
 - Ngưỡng phát hiện tai nạn (`ACC_CRASH_THRESHOLD = 2.5g`, `TILT_ANGLE_THRESHOLD = 60°`, ...)
 

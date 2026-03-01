@@ -85,7 +85,7 @@ class Logger {
 public:
     // Log với prefix tên module
     static void info(const char* moduleName, const char* msg) {
-        if (!_enabled) return;
+        if (!flag()) return;
         Serial.print("[INFO][");
         Serial.print(moduleName);
         Serial.print("] ");
@@ -93,7 +93,7 @@ public:
     }
 
     static void warn(const char* moduleName, const char* msg) {
-        if (!_enabled) return;
+        if (!flag()) return;
         Serial.print("[WARN][");
         Serial.print(moduleName);
         Serial.print("] ");
@@ -101,7 +101,7 @@ public:
     }
 
     static void error(const char* moduleName, const char* msg) {
-        // Error luôn in ra bất kể _enabled
+        // Error luôn in ra bất kể flag()
         Serial.print("[ERR ][");
         Serial.print(moduleName);
         Serial.print("] ");
@@ -110,7 +110,7 @@ public:
 
     // Log kèm giá trị số (tránh phải format string thủ công)
     static void infoValue(const char* moduleName, const char* label, float value) {
-        if (!_enabled) return;
+        if (!flag()) return;
         Serial.print("[INFO][");
         Serial.print(moduleName);
         Serial.print("] ");
@@ -119,7 +119,7 @@ public:
     }
 
     static void infoValue(const char* moduleName, const char* label, int32_t value) {
-        if (!_enabled) return;
+        if (!flag()) return;
         Serial.print("[INFO][");
         Serial.print(moduleName);
         Serial.print("] ");
@@ -127,13 +127,13 @@ public:
         Serial.println(value);
     }
 
-    static void setEnabled(bool enabled) { _enabled = enabled; }
-    static bool isEnabled()              { return _enabled; }
+    static void setEnabled(bool enabled) { flag() = enabled; }
+    static bool isEnabled()              { return flag(); }
 
 private:
-    static bool _enabled;
+    // Local static — header-only, không cần .cpp, C++11 compatible
+    static bool& flag() {
+        static bool _enabled = true;
+        return _enabled;
+    }
 };
-
-// Định nghĩa static member (sẽ được init trong .cpp hoặc main)
-// Dùng inline để tránh multiple definition error
-inline bool Logger::_enabled = true;
