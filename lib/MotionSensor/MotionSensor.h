@@ -5,10 +5,10 @@
 #include <freertos/task.h>
 #include <freertos/queue.h>
 
-#include <IModule.h>
-#include <DataTypes.h>
-#include <Config.h>
-#include <MPU6050_tockn.h>
+#include "IModule.h"
+#include "DataTypes.h"
+#include "Config.h"
+#include "MPU6050_tockn.h"
 
 // ============================================================
 //  MotionSensor.h  —  Khối 1: Cảm biến chuyển động
@@ -51,6 +51,13 @@ public:
     bool        isSensorConnected()  const { return _sensorConnected; }
     uint32_t    getSampleCount()     const { return _sampleCount; }
     uint32_t    getDroppedFrames()   const { return _droppedFrames; }
+
+    // Gyro offset (°/s) sau calibration — truyền sang DataNormalizer
+    // để tự trừ offset trên raw counts thay vì phụ thuộc thư viện
+    // Không khai báo const vì getGyroXoffset() trong MPU6050_tockn thiếu const
+    float       getGyroOffsetX()     { return _mpu.getGyroXoffset(); }
+    float       getGyroOffsetY()     { return _mpu.getGyroYoffset(); }
+    float       getGyroOffsetZ()     { return _mpu.getGyroZoffset(); }
 
 private:
     // --------------------------------------------------------
