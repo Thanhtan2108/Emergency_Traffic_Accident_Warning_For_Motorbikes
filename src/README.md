@@ -1,29 +1,36 @@
-# Bước 4 — SignalProcessor
+# Bước 5 — AccidentDetector
 
-## Những gì được implement
-
-### Pipeline xử lý tín hiệu theo 4 bước tuần tự
+## State Machine
 
 ```text
-NormalizedData → [LPF] → [Complementary Filter] → [Yaw Integration] → [Compute Features] → MotionFeatures
+UNKNOWN ──(frame đầu tiên)──► NORMAL
+                                │
+              phát hiện bất thường (1 frame)
+                                │
+                                ▼
+                           SUSPICIOUS
+                           /         \
+        ≥5 frame bất thường           ≥10 frame bình thường
+                /                               \
+               ▼                                ▼
+          ACCIDENT ──(sau 30 giây)──────► NORMAL
 ```
 
-### Bước 1 — Low-Pass Filter (`alpha_acc=0.15`, `alpha_gyro=0.10`)
+## Logic phân loại tai nạn
 
-```text
-y[n] = alpha × x[n] + (1 - alpha) × y[n-1]
-```
+| Loại | Điều kiện |
+| ---- | --------- |
+| CRASH | totalAccMag > 2.5g |
+| FALL | \|angleX\| hoặc \|angleY\| > 60° |
+| SUDDEN_STOP | jerk > 10 g/s |
+| COMBINED | ≥ 2 điều kiện cùng lúc |
 
-Lọc nhiễu tần số cao (rung động cơ, điện từ) trước khi tính góc.
+## Cách test thực tế
 
-### Bước 2 — Complementary Filter (`gyro=98%`, `accel=2%`)
+TEST 3 — Giữ yên 10 giây: state=NORMAL liên tục → không false positive
 
-```text
-angle = 0.98 × (angle + gyro_filtered × dt) + 0.02 × angleAcc
-```
+TEST 4 — Lắc mạnh sensor: quan sát NORMAL→SUSPICIOUS→ACCIDENT với log snapshot
 
-Kết hợp gyro (nhanh nhưng drift) với accel (ổn định nhưng nhiễu động).
+TEST 5 — Nghiêng > 60°: phát hiện FALL
 
-### Bước 3 — Tích phân Yaw: `angleZ += gyroZ_filtered × dt` — accel không đo được yaw nên dùng gyro thuần
-
-### Bước 4 — Compute Features: `totalAccMag`, `angularVelMag`, `jerk = Δ|acc|/dt`
+TEST 7 — Debounce: lắc 1-4 frame rồi dừng → phải quay về NORMAL, không lên ACCIDENT
