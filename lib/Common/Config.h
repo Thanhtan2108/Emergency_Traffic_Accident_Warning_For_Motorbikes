@@ -12,6 +12,7 @@
 #define PIN_SDA             21          // I2C SDA
 #define PIN_SCL             22          // I2C SCL
 #define PIN_BUZZER          13          // Buzzer (PWM capable)
+#define PIN_BUTTON          4           // Button for manual buzzer toggle
 #define PIN_LED_STATUS      2           // LED trạng thái hệ thống (built-in)
 
 // ------------------------------------------------------------

@@ -23,6 +23,8 @@
 
 #include "Config.h"
 #include "DataTypes.h"
+#include "SystemStateManager.h"
+#include "SystemWatchdog.h"
 #include "IModule.h"
 #include "QueueManager.h"
 #include "MotionSensor.h"
@@ -31,8 +33,7 @@
 #include "AccidentDetector.h"
 #include "AlertManager.h"
 #include "Buzzer_Active.h"
-#include "SystemStateManager.h"
-#include "SystemWatchdog.h"
+#include "Button.h"
 
 // ============================================================
 //  Globals
@@ -42,11 +43,11 @@ static DataNormalizer*      g_dataNormalizer    = nullptr;
 static SignalProcessor*     g_signalProcessor   = nullptr;
 static AccidentDetector*    g_accidentDetector  = nullptr;
 static AlertManager*        g_alertManager      = nullptr;
-static BuzzerActive*        g_buzzer            = nullptr;
-static SystemStateManager*  g_stateManager      = nullptr;
+static BuzzerActive*        g_buzzer            = nullptr;static Button*              g_button            = nullptr;static SystemStateManager*  g_stateManager      = nullptr;
 static SystemWatchdog*      g_watchdog          = nullptr;
 
 static void monitorTask(void* pvParameters);
+static void taskButton(void* pvParameters);
 static void printSeparator();
 static const char* stateToStr(VehicleState s);
 static const char* sysStateToStr(SystemState s);
@@ -112,6 +113,10 @@ void setup() {
         Serial.println("[FATAL] K5 failed"); while(true){}
     }
 
+    // --- Manual Button Control ---
+    g_button = new Button(PIN_BUTTON);
+    g_button->begin();
+
     // --- K6: SystemWatchdog ---
     g_watchdog = new SystemWatchdog(
         qm.getWatchdogQueue(),
@@ -152,6 +157,11 @@ void setup() {
     xTaskCreatePinnedToCore(
         monitorTask, "MonitorTask", 4096,
         nullptr, 1, nullptr, CORE_MANAGEMENT_TASKS
+    );
+
+    xTaskCreatePinnedToCore(
+        taskButton, "TaskButton", 2048,
+        nullptr, 2, nullptr, CORE_MANAGEMENT_TASKS
     );
 
     printSeparator();
@@ -269,6 +279,20 @@ static const char* sysStateToStr(SystemState s) {
         case SystemState::ERROR:       return "ERROR";
         case SystemState::RECOVERY:    return "RECOVERY";
         default:                       return "?";
+    }
+}
+
+static void taskButton(void* pvParameters) {
+    while (true) {
+        if (g_button->wasPressed()) {
+            Serial.println("[BUTTON] Toggle buzzer");
+            if (g_buzzer->isOn()) {
+                g_buzzer->turnOff();
+            } else {
+                g_buzzer->turnOn();
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
