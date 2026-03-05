@@ -1,4 +1,4 @@
-#include "ReadDataFromSensor.h"
+#include <ReadDataFromSensor.h>
 
 // Constructor
 ReadData::ReadData() : mpu(Wire) {}
