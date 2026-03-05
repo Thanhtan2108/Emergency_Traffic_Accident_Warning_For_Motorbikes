@@ -1,4 +1,5 @@
 #include "DataNormalizer.h"
+#include "QueueManager.h"
 
 // ============================================================
 //  DataNormalizer.cpp
@@ -103,8 +104,8 @@ void DataNormalizer::taskRun() {
         );
 
         if (received != pdTRUE) {
-            // Timeout — không có data mới, tiếp tục chờ
-            // Đây là bình thường nếu MotionSensor chưa sẵn sàng
+            // Timeout — gửi heartbeat để Watchdog biết task còn sống
+            QueueManager::getInstance().sendHeartbeat(TaskID::DATA_NORMALIZER);
             continue;
         }
 
@@ -121,6 +122,9 @@ void DataNormalizer::taskRun() {
         pushToQueue(normalized);
 
         _processedCount++;
+
+        // Gửi heartbeat sau mỗi frame xử lý
+        QueueManager::getInstance().sendHeartbeat(TaskID::DATA_NORMALIZER);
 
         // Log định kỳ mỗi 500 frame (~5 giây)
         if (LOG_MOTION_DATA && (_processedCount % 500 == 0)) {

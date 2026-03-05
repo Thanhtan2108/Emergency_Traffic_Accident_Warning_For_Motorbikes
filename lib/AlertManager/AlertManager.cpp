@@ -122,7 +122,8 @@ void AlertManager::taskRun() {
                     break;
             }
         }
-        // Timeout: không có request, tiếp tục chờ
+        // Gửi heartbeat mỗi vòng lặp (kể cả timeout)
+        QueueManager::getInstance().sendHeartbeat(TaskID::ALERT_MANAGER);
     }
 }
 

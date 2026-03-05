@@ -1,4 +1,5 @@
 #include "AccidentDetector.h"
+#include "QueueManager.h"
 
 // ============================================================
 //  AccidentDetector.cpp
@@ -109,6 +110,8 @@ void AccidentDetector::taskRun() {
                     }
                 }
             }
+            // Gửi heartbeat kể cả khi timeout
+            QueueManager::getInstance().sendHeartbeat(TaskID::ACCIDENT_DETECTOR);
             continue;
         }
 
@@ -125,6 +128,9 @@ void AccidentDetector::taskRun() {
         updateStateMachine(detected, features);
 
         _processedCount++;
+
+        // Gửi heartbeat sau mỗi frame xử lý
+        QueueManager::getInstance().sendHeartbeat(TaskID::ACCIDENT_DETECTOR);
     }
 }
 

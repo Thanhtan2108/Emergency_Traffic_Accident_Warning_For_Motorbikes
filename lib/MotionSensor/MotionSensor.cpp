@@ -1,4 +1,5 @@
 #include "MotionSensor.h"
+#include "QueueManager.h"
 
 // ============================================================
 //  MotionSensor.cpp
@@ -124,6 +125,9 @@ void MotionSensor::taskRun() {
                 Logger::infoValue(getModuleName(), "Dropped: ", (int32_t)_droppedFrames);
             }
         }
+
+        // Gửi heartbeat cho Watchdog (K6)
+        QueueManager::getInstance().sendHeartbeat(TaskID::MOTION_SENSOR);
 
         // vTaskDelayUntil đảm bảo chính xác 100Hz bất kể
         // thời gian xử lý mỗi iteration (không bị drift tích lũy)

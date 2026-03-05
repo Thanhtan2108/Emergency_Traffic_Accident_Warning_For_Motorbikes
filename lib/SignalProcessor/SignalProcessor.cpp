@@ -1,4 +1,5 @@
 #include "SignalProcessor.h"
+#include "QueueManager.h"
 
 // ============================================================
 //  SignalProcessor.cpp
@@ -92,7 +93,9 @@ void SignalProcessor::taskRun() {
         );
 
         if (received != pdTRUE) {
-            continue;   // Timeout, chờ tiếp
+            // Timeout — gửi heartbeat để Watchdog biết task còn sống
+            QueueManager::getInstance().sendHeartbeat(TaskID::SIGNAL_PROCESSOR);
+            continue;
         }
 
         if (!input.isValid) {
@@ -157,6 +160,9 @@ void SignalProcessor::taskRun() {
         pushToQueue(_latest);
 
         _processedCount++;
+
+        // Gửi heartbeat sau mỗi frame xử lý
+        QueueManager::getInstance().sendHeartbeat(TaskID::SIGNAL_PROCESSOR);
 
         if (LOG_FEATURES && (_processedCount % 500 == 0)) {
             Logger::infoValue(getModuleName(), "Processed: ", (int32_t)_processedCount);

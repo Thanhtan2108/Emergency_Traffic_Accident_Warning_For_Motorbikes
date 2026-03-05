@@ -8,6 +8,7 @@
 #include "IModule.h"
 #include "DataTypes.h"
 #include "Config.h"
+#include "QueueManager.h"
 #include "Buzzer.h"
 
 // ============================================================
