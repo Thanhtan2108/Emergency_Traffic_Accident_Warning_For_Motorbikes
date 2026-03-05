@@ -43,9 +43,3 @@
 - 1 Serial mutex (tránh log bị xáo trộn giữa các task)
 
 - Helper `sendHeartbeat()` cho các task gọi dễ dàng
-
-- Định nghĩa:
-
-  - Chân GPIO của MCU ESP32 nối với button
-
-  - Chân GPIO của MCU ESP32 nối với buzzer
