@@ -23,8 +23,8 @@ private:
     uint32_t impactTime;
     uint32_t stillStart;
 
-    const float impactThreshold = 3.0;
-    const float tiltThreshold = 60.0;
+    const float impactThreshold = 1.2;
+    const float tiltThreshold = 40.0;
 
     const float stillAccelMin = 0.85;
     const float stillAccelMax = 1.15;

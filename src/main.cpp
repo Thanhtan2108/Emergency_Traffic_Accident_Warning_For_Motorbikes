@@ -3,146 +3,190 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
-#include <freertos/semphr.h>
 
+#include <PinSetup.h>
 #include "ReadDataFromSensor.h"
 #include "AccidentDetector.h"
+#include "AlertBuzzer.h"
 
-// ======= Global objects =========
+// ==============================
+// Objects
+// ==============================
+
 ReadData sensor;
 AccidentDetector detector;
+AlertBuzzer buzzer(BUZZER_PIN);
+
+
+// ==============================
+// Data structures
+// ==============================
 
 struct SensorData {
     float accelTotal;
     float angleX;
     float angleY;
-    uint32_t timestamp;
 };
 
-struct AlertData {
+struct AlertEvent {
     bool accident;
-    uint32_t timestamp;
 };
 
-// Queues & Mutex
-static QueueHandle_t sensorQueue = nullptr;
-static QueueHandle_t alertQueue  = nullptr;
-static SemaphoreHandle_t serialMutex = nullptr;
 
-// Pins
-static const int BUZZER_PIN = 13;
+// ==============================
+// FreeRTOS objects
+// ==============================
 
-// Task prototypes
-void TaskSensor(void* pvParameters);
-void TaskDetect(void* pvParameters);
-void TaskSendSOS(void* pvParameters);
+QueueHandle_t sensorQueue;
+QueueHandle_t alertQueue;
 
-// helper for safe printing
-static void safePrintln(const String &s) {
-    if (xSemaphoreTake(serialMutex, pdMS_TO_TICKS(100))) {
-        Serial.println(s);
-        xSemaphoreGive(serialMutex);
-    }
-}
 
-void setup() {
-    Serial.begin(115200);
-    delay(50);
+// ==============================
+// Tasks
+// ==============================
 
-    pinMode(BUZZER_PIN, OUTPUT);
-    digitalWrite(BUZZER_PIN, LOW);
+void TaskSensor(void *pvParameters) {
 
-    // init sensor
-    sensor.begin(); // this will calibrate gyro (blocking inside)
-
-    // create queues
-    sensorQueue = xQueueCreate(10, sizeof(SensorData));
-    alertQueue  = xQueueCreate(4, sizeof(AlertData));
-
-    // create mutex
-    serialMutex = xSemaphoreCreateMutex();
-
-    // create tasks pinned to cores (ESP32)
-    xTaskCreatePinnedToCore(TaskSensor, "TaskSensor", 4096, NULL, 3, NULL, 1);
-    xTaskCreatePinnedToCore(TaskDetect, "TaskDetect", 4096, NULL, 2, NULL, 1);
-    xTaskCreatePinnedToCore(TaskSendSOS, "TaskSendSOS", 4096, NULL, 1, NULL, 0);
-
-    safePrintln("System started. Tasks created.");
-}
-
-void loop() {
-    // empty - all work handBuzzer by tasks
-    vTaskDelay(pdMS_TO_TICKS(1000));
-}
-
-// ---------------- TaskSensor ----------------
-void TaskSensor(void* pvParameters) {
     SensorData data;
-    const TickType_t delayTicks = pdMS_TO_TICKS(50); // 20Hz
-    while(true) {
+
+    while (true) {
+
         sensor.update();
+
         data.accelTotal = sensor.getAccelTotal();
         data.angleX = sensor.getAngleX();
         data.angleY = sensor.getAngleY();
-        data.timestamp = millis();
 
-        // send (don't block long)
-        xQueueSend(sensorQueue, &data, 0);
+        // Gửi dữ liệu qua Queue
+        xQueueSend(sensorQueue, &data, portMAX_DELAY);
 
-        // debug print
-        if (xSemaphoreTake(serialMutex, pdMS_TO_TICKS(50))) {
-            Serial.print("Sensor updated | A: ");
-            Serial.print(data.accelTotal, 3);
-            Serial.print(" | angleX: ");
-            Serial.print(data.angleX, 2);
-            Serial.print(" | angleY: ");
-            Serial.println(data.angleY, 2);
-            xSemaphoreGive(serialMutex);
-        }
+        // ===== LOG SENSOR =====
+        Serial.print("A: ");
+        Serial.print(data.accelTotal, 3);
 
-        vTaskDelay(delayTicks);
+        Serial.print(" | angleX: ");
+        Serial.print(data.angleX, 2);
+
+        Serial.print(" | angleY: ");
+        Serial.println(data.angleY, 2);
+
+        vTaskDelay(pdMS_TO_TICKS(1000)); // 20Hz
     }
 }
 
-// ---------------- TaskDetect ----------------
-void TaskDetect(void* pvParameters) {
+
+
+void TaskDetectAccident(void *pvParameters) {
+
     SensorData data;
-    AlertData alert;
-    while(true) {
-        if (xQueueReceive(sensorQueue, &data, portMAX_DELAY) == pdTRUE) {
-            bool fireNow = detector.processSample(data.accelTotal, data.angleX, data.angleY);
-            if (fireNow) {
+    AlertEvent alert;
+
+    while (true) {
+
+        if (xQueueReceive(sensorQueue, &data, portMAX_DELAY)) {
+
+            bool accident =
+                detector.processSample(
+                    data.accelTotal,
+                    data.angleX,
+                    data.angleY);
+
+            // ===== LOG DETECTOR =====
+            Serial.print("Detector state: ");
+            Serial.println(accident ? "ACCIDENT" : "NORMAL");
+
+            if (accident) {
+
+                Serial.println(">>> ACCIDENT EVENT QUEUED");
+
                 alert.accident = true;
-                alert.timestamp = millis();
-                xQueueSend(alertQueue, &alert, 0);
+
+                xQueueSend(alertQueue, &alert, portMAX_DELAY);
             }
-            // optional: when not firing we could send false to alertQueue to clear, but TaskSendSOS can maintain its own state
         }
     }
 }
 
-// ---------------- TaskSendSOS ----------------
-void TaskSendSOS(void* pvParameters) {
-    AlertData alert;
-    bool BuzzerOn = false;
-    while(true) {
-        if (xQueueReceive(alertQueue, &alert, portMAX_DELAY) == pdTRUE) {
+
+
+void TaskSendSOS(void *pvParameters) {
+
+    AlertEvent alert;
+
+    while (true) {
+
+        if (xQueueReceive(alertQueue, &alert, portMAX_DELAY)) {
+
             if (alert.accident) {
-                BuzzerOn = true;
-                digitalWrite(BUZZER_PIN, HIGH);
 
-                // Debug print
-                if (xSemaphoreTake(serialMutex, pdMS_TO_TICKS(100))) {
-                    Serial.println(">> ALERT: ACCIDENT DETECTED! (Buzzer ON)");
-                    Serial.print("   at "); Serial.println(alert.timestamp);
-                    xSemaphoreGive(serialMutex);
-                }
+                Serial.println("=================================");
+                Serial.println("   ACCIDENT DETECTED !!!");
+                Serial.println("=================================");
 
-                // TODO: Place SMS/GSM/WiFi send code here.
-                // e.g. queue a network task, or call a non-blocking function to request message + location.
+                buzzer.on();
+
+                vTaskDelay(pdMS_TO_TICKS(2000));
+
+                buzzer.off();
+
+                Serial.println("Buzzer OFF");
             }
         }
-        // remain responsive but avoid busy spin
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
+}
+
+
+// ==============================
+// Arduino setup
+// ==============================
+
+void setup() {
+
+    Serial.begin(115200);
+
+    Serial.println("=================================");
+    Serial.println(" Accident Detection System Start ");
+    Serial.println("=================================");
+
+    sensor.begin();
+    buzzer.begin();
+
+    sensorQueue = xQueueCreate(10, sizeof(SensorData));
+    alertQueue  = xQueueCreate(5, sizeof(AlertEvent));
+
+    Serial.println("Queues created");
+
+    xTaskCreatePinnedToCore(
+        TaskSensor,
+        "TaskSensor",
+        4096,
+        NULL,
+        3,
+        NULL,
+        1);
+
+    xTaskCreatePinnedToCore(
+        TaskDetectAccident,
+        "TaskDetectAccident",
+        4096,
+        NULL,
+        2,
+        NULL,
+        1);
+
+    xTaskCreatePinnedToCore(
+        TaskSendSOS,
+        "TaskSendSOS",
+        4096,
+        NULL,
+        1,
+        NULL,
+        0);
+
+    Serial.println("Tasks started");
+}
+
+
+void loop() {
+
 }
