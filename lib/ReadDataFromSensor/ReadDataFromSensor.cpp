@@ -1,68 +1,39 @@
-#include <ReadDataFromSensor.h>
+#include "ReadDataFromSensor.h"
+#include <math.h>
 
-// Constructor
-ReadData::ReadData() : mpu(Wire) {}
+ReadData::ReadData()
+: mpu(Wire), accX(0), accY(0), accZ(0),
+  accelTotal(0), angleX(0), angleY(0), angleZ(0), tempC(0)
+{}
 
-// Khoi dong cam bien
-void ReadData::begin()
-{
+void ReadData::begin() {
     Wire.begin();
-
     mpu.begin();
-
-    // Calibrate gyro
+    // Calibrate gyro offsets (blocking, the library prints messages)
     mpu.calcGyroOffsets(true);
 }
 
-// Cap nhat du lieu cam bien
-void ReadData::update()
-{
+void ReadData::update() {
+    // update library (reads sensor and fuses)
     mpu.update();
 
-    // Doc gia toc
     accX = mpu.getAccX();
     accY = mpu.getAccY();
     accZ = mpu.getAccZ();
 
-    // Tinh gia toc tong hop
-    accelTotal = sqrt(accX * accX +
-                      accY * accY +
-                      accZ * accZ);
+    accelTotal = sqrtf(accX*accX + accY*accY + accZ*accZ);
 
-    // Doc goc nghieng
     angleX = mpu.getAngleX();
     angleY = mpu.getAngleY();
+    angleZ = mpu.getAngleZ();
+
+    tempC = mpu.getTemp();
 }
 
-// Lay gia toc tung truc
-float ReadData::getAccX()
-{
-    return accX;
-}
-
-float ReadData::getAccY()
-{
-    return accY;
-}
-
-float ReadData::getAccZ()
-{
-    return accZ;
-}
-
-// Lay gia toc tong hop
-float ReadData::getAccelTotal()
-{
-    return accelTotal;
-}
-
-// Lay goc nghieng
-float ReadData::getAngleX()
-{
-    return angleX;
-}
-
-float ReadData::getAngleY()
-{
-    return angleY;
-}
+float ReadData::getAccX() const { return accX; }
+float ReadData::getAccY() const { return accY; }
+float ReadData::getAccZ() const { return accZ; }
+float ReadData::getAccelTotal() const { return accelTotal; }
+float ReadData::getAngleX() const { return angleX; }
+float ReadData::getAngleY() const { return angleY; }
+float ReadData::getTemp() const { return tempC; }
